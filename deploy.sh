@@ -1,12 +1,12 @@
 #!/bin/sh
-# Builds on the Mac VM (ssh 2229) and installs on the FreeBSD VM (ssh 2222) the open AppKit + a test program: sh open/deploy.sh [program.m]
+# Builds on the Mac VM (ssh 2229) and installs on the FreeBSD VM (ssh 2222) the open AppKit + a test program (from the tests repository, open-programs/): sh open/deploy.sh [program]
 # the tree of the build: made from the repositories next to this one (AppKit, WindowServer, SkyLight, CoreUI, research), or from AppKit_DIR=... WINDOWSERVER_DIR=... SKYLIGHT_DIR=... COREUI_DIR=... RESEARCH_DIR=...
 H="$(cd "$(dirname "$0")" && pwd)"; P0="$(dirname "$H")"; T="${CLAUDE_JOB_DIR:-/tmp}/tmp"; mkdir -p "$T"; P="${1:-hello}"
 R="$T/ws"; rm -rf "$R"; mkdir -p "$R/include" "$R/src" "$R/tools"
 put() { mkdir -p "$2"; (cd "$1" && tar cf - --exclude .git .) | (cd "$2" && tar xf -); }
 WSD="${WINDOWSERVER_DIR:-$P0/WindowServer}"; SKY="${SKYLIGHT_DIR:-$P0/SkyLight}"
 put "$WSD/include" "$R/include"; put "$SKY/include" "$R/include"; for f in client compositor_sw region ipc evrec buffer; do cp "$WSD/src/$f.c" "$R/src/"; done
-put "${APPKIT_DIR:-$P0/AppKit}" "$R/appkit"; put "$H" "$R/open"; put "${COREUI_DIR:-$P0/CoreUI}" "$R/coreui"; cp "${RESEARCH_DIR:-$P0/research}/tools/ppm2png.py" "$R/tools/"
+put "${APPKIT_DIR:-$P0/AppKit}" "$R/appkit"; put "$H" "$R/open"; put "${TESTS_DIR:-$P0/tests}/open-programs" "$R/open"; put "${COREUI_DIR:-$P0/CoreUI}" "$R/coreui"; cp "${RESEARCH_DIR:-$P0/research}/tools/ppm2png.py" "$R/tools/"
 MK="-i $HOME/fbsd-vm/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o BatchMode=yes"; K="-i $HOME/fbsd-vm/id_ed25519 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -q -o ConnectTimeout=10"
 tar czf $T/wsb.tgz -C "$R" include src/client.c src/compositor_sw.c src/region.c src/ipc.c src/evrec.c src/buffer.c appkit/decompiled/src appkit/decompiled/test/stubs.m open coreui/car.c coreui/car.h coreui/bvg.c coreui/bvg.h coreui/bitmap.c coreui/lzfse
 scp -P 2229 $MK $T/wsb.tgz alex@localhost:/tmp/ >/dev/null 2>&1
