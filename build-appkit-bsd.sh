@@ -11,7 +11,7 @@ rm -rf "$R" "$ST"; mkdir -p "$R/Foundation" "$R/CoreGraphics" "$ST/CoreText" "$S
 cp -R "$P/Foundation/upstream/ravynos-Foundation/Headers/Foundation"/* "$R/Foundation/"; cp "$P/CoreGraphics/upstream/ravynos-CoreGraphics"/*.h "$R/CoreGraphics/"
 python3 "$P/dyld/tools/sdk/patch-foundation-headers.py" "$R" >/dev/null
 cp "$P/dyld/tools/sdk/stubs/CoreText/CoreText.h" "$ST/CoreText/"; cp "$P/dyld/tools/sdk/stubs/CoreImage.h" "$ST/CoreImage/CoreImage.h"; for h in CoreServices/CoreServices.h objc_size_alignment.h; do echo "/* stub */" > "$ST/$h"; done
-T="--target=x86_64-apple-macosx14.0 -nostdinc -isystem $RES -isystem $I"
+T="--target=x86_64-apple-macosx14.0 -DXNU_PLATFORM_MacOSX -nostdinc -isystem $RES -isystem $I"
 OBJC="$T -x objective-c -fobjc-runtime=macosx-14.0 -fobjc-arc -isystem $R -isystem $ST -Wno-everything -O1 -I$S -I$P/CoreUI -I$P/WindowServer/include -I$P/SkyLight/include"
 ok=0; bad=0; : > "$OUT/compile-failed.txt"
 for f in "$S"/*.m; do b=$(basename "$f" .m); [ "$b" = NSSliderAccessoryBehavior ] && continue
