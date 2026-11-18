@@ -1,6 +1,6 @@
 #!/bin/sh
 # open [-a APP] [-n] [-g] [--args ...] APP.app | FILE ...: the `open` of the Mac.  A .app is started (a Mac application: on the AppKit of the "open" layer, the real dyld of the Mac under darwinator,
-# our AppKit, the windows on wsd; the bundle is patched once into ~/Library/Caches/open and everything else is linked to the original); a file or folder goes to the application named with -a, else to
+# our AppKit, the windows on WindowServer; the bundle is patched once into ~/Library/Caches/open and everything else is linked to the original); a file or folder goes to the application named with -a, else to
 # the default one (text: TextEdit), else to xdg-open.   open Notes.app     open -a TextEdit note.txt     open note.txt
 PY=/usr/local/bin/python3
 APPNAME=""; ARGS=""
@@ -30,7 +30,7 @@ run_app() {		# APP.app [FILE ...]
 		$PY /usr/local/libexec/open-patch.py --bundle "$APP" "$CACHE" >&2 || exit 1
 		touch "$STAMP"
 	fi
-	export WS_SOCKET="${WS_SOCKET:-/tmp/wsd.sock}"
+	export WS_SOCKET="${WS_SOCKET:-/tmp/WindowServer.sock}"
 	exec "$CACHE/Contents/MacOS/$EXE" "$@"
 }
 abs() { for f in "$@"; do echo "$(cd "$(dirname "$f")" && pwd)/$(basename "$f")"; done; }
