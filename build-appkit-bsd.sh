@@ -26,3 +26,11 @@ for fw in Foundation CoreFoundation CoreGraphics UIFoundation; do mkdir -p "$OUT
 $LD -arch x86_64 -platform_version macos 12.0 14.0 -dylib -install_name /open/AppKit -undefined dynamic_lookup -F"$OUT/fw" -L"$P/darwinator/tests/macho-toolchain" -L"$P/darwinator/tests/macho-toolchain/objc" -lSystem -lobjc \
 	-reexport_framework Foundation -framework CoreFoundation -framework CoreGraphics -reexport_framework UIFoundation -o "$OUT/AppKit" "$OUT"/o/*.o
 file "$OUT/AppKit" | cut -c1-120; ls -la "$OUT/AppKit" | awk '{print $5, "bytes"}'
+# /open/Cocoa: the umbrella of our AppKit (apps that link Cocoa get ours + Foundation)
+SR="$OUT/sysroot"; rm -rf "$SR"; for p in System/Library/Frameworks/Foundation.framework/Versions/C/Foundation System/Library/PrivateFrameworks/UIFoundation.framework/Versions/A/UIFoundation; do mkdir -p "$SR/$(dirname $p)"; n=$(basename $p); cp "$H/stubs-tbd/$n.framework/$n.tbd" "$SR/$p.tbd"; done   # lld finds the re-exports of /open/AppKit by install name only under a sysroot
+$LD -arch x86_64 -platform_version macos 12.0 14.0 -dylib -install_name /open/Cocoa -undefined dynamic_lookup -syslibroot "$SR" -F"$OUT/fw" -L"$P/darwinator/tests/macho-toolchain" -lSystem -reexport_framework Foundation -reexport_framework UIFoundation -reexport_library "$OUT/AppKit" -o "$OUT/Cocoa" 2>&1 | grep -v "ld64.lld: warning" | head -3
+# stand-ins for libraries that would pull the real AppKit into the process (open-patch.py points the load commands there): one dylib per open/stubs-lib-NAME.m
+for f in "$H"/stubs-lib-*.m; do [ -f "$f" ] || continue; n=$(basename "$f" .m); n=${n#stubs-lib-}
+	cc $OBJC -c "$f" -o "$OUT/stub-$n.o" 2>/dev/null && $LD -arch x86_64 -platform_version macos 12.0 14.0 -dylib -install_name /open/stub-$n -undefined dynamic_lookup -F"$OUT/fw" -L"$P/darwinator/tests/macho-toolchain" -L"$P/darwinator/tests/macho-toolchain/objc" -lSystem -lobjc -framework Foundation -o "$OUT/stub-$n" "$OUT/stub-$n.o" 2>&1 | grep -v "ld64.lld: warning" | head -3
+done
+ls "$OUT"/Cocoa "$OUT"/stub-* 2>&1 | head
